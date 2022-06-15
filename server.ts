@@ -79,6 +79,17 @@ const notFound = (context: RouterContext<any>) => {
   context.response.body = null;
 };
 
+router.get("/", (context) => {
+  context.response.body = {
+    message: "Welcome to the VTEX Search Proxy!",
+    routes: {
+      search: "/:accountName/:search?qs=...",
+      product: "/:accountName/:linkText/p",
+    },
+    ref: "https://developers.vtex.com/vtex-rest-api/reference/productsearch",
+  };
+});
+
 router.get("/apple-touch-icon-precomposed.png", notFound);
 router.get("/apple-touch-icon.png", notFound);
 router.get("/favicon.ico", async (context) => {
@@ -127,7 +138,7 @@ router.get("/:account/:linkText/p", async (context) => {
   const { account, linkText } = context.params;
   start("proxy");
   const originURL = productURL(account, linkText);
-  console.log(`Proxy: ${originURL}`);
+  console.log(`${magenta("PROXY")} ${yellow(originURL)}`);
   const results = await fetch(originURL);
   results.headers.forEach((value, key) => {
     if (key.startsWith("x-vtex-")) {
