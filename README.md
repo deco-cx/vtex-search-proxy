@@ -15,5 +15,5 @@ DEVELOPMENT=true
 
 ### Future
 
-[] Reflection on JSON response to build out TypeScript types offered by each
+[ ] Reflection on JSON response to build out TypeScript types offered by each
 route, automatically.
