@@ -105,7 +105,11 @@ router.get("/favicon.ico", async (context) => {
   context.response.headers.set("content-type", "image/x-icon");
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-max-age=60, stale-while-revalidate=86400",
+    "max-age=30, s-max-age=60",
+  );
+  context.response.headers.set(
+    "surrogate-control",
+    "max-age=30, stale-while-revalidate=86400",
   );
   context.response.body = file.readable;
 });
@@ -129,7 +133,11 @@ router.get("/:account/:search?", async (context) => {
   );
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-max-age=60, stale-while-revalidate=86400",
+    "max-age=30, s-max-age=60",
+  );
+  context.response.headers.set(
+    "surrogate-control",
+    "max-age=30, stale-while-revalidate=86400",
   );
   context.response.body = results.body;
 });
@@ -148,7 +156,11 @@ router.get("/:account/:linkText/p", async (context) => {
   end("proxy");
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-max-age=60, stale-while-revalidate=86400",
+    "max-age=30, s-max-age=60",
+  );
+  context.response.headers.set(
+    "surrogate-control",
+    "max-age=30, stale-while-revalidate=86400",
   );
   context.response.body = results.body;
 });
