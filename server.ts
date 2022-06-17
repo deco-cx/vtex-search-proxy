@@ -105,7 +105,7 @@ router.get("/favicon.ico", async (context) => {
   context.response.headers.set("content-type", "image/x-icon");
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-maxage=60",
+    "max-age=60, s-maxage=60",
   );
   context.response.headers.set(
     "surrogate-control",
@@ -133,7 +133,7 @@ router.get("/:account/:search?", async (context) => {
   );
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-maxage=60",
+    "max-age=60, s-maxage=60",
   );
   context.response.headers.set(
     "surrogate-control",
@@ -156,7 +156,7 @@ router.get("/:account/:linkText/p", async (context) => {
   end("proxy");
   context.response.headers.set(
     "cache-control",
-    "max-age=30, s-maxage=60",
+    "max-age=60, s-maxage=60",
   );
   context.response.headers.set(
     "surrogate-control",
