@@ -71,6 +71,12 @@ app.use(async (context, next) => {
   context.response.headers.set("X-Response-Time", `${ms}ms`);
 });
 
+// CORS
+app.use(async (context, next) => {
+  await next();
+  context.response.headers.set("Access-Control-Allow-Origin", "*");
+});
+
 // Create an oak Router
 const router = new Router();
 
