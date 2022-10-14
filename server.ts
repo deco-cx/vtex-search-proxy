@@ -120,6 +120,42 @@ router.get("/favicon.ico", async (context) => {
   context.response.body = file.readable;
 });
 
+router.get(
+  "/:account/intelligent-search/(.*)",
+  async (context) => {
+    const { account, 0: facets } = context.params;
+    const searchParams = context.request.url.search;
+
+    start("proxy");
+    const url =
+      `https://${account}.vtexcommercestable.com.br/api/io/_v/api/intelligent-search/${facets}${
+        searchParams ?? ""
+      }`;
+
+    const results = await fetch(url);
+    start("proxy");
+    results.headers.forEach((value, key) => {
+      if (key.startsWith("x-vtex-")) {
+        context.response.headers.set(key, value);
+      }
+    });
+    context.response.headers.set(
+      "content-type",
+      "application/json; charset=utf-8",
+    );
+    context.response.headers.set(
+      "cache-control",
+      "max-age=60, s-maxage=60",
+    );
+    context.response.headers.set(
+      "surrogate-control",
+      "max-age=30, stale-while-revalidate=86400",
+    );
+
+    context.response.body = results.body;
+  },
+);
+
 router.get("/:account/:search?", async (context) => {
   const { account, search } = context.params;
   const restQueryString = context.request.url.searchParams.toString();
