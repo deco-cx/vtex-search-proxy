@@ -1,4 +1,3 @@
-import { RouterContext } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 import {
   Application,
   bold,
@@ -9,8 +8,10 @@ import {
   magenta,
   red,
   Router,
+  RouterContext,
   yellow,
 } from "./deps.ts";
+import { proxy } from "./proxy.ts";
 
 const PORT = parseInt(Deno.env.get("PORT") || "8080");
 const dev = Deno.env.get("DEVELOPMENT") === "true";
@@ -121,6 +122,31 @@ router.get("/favicon.ico", async (context) => {
 });
 
 router.get(
+  "/v2/:account/api/(.*)",
+  async (context) => {
+    const { params, request } = context;
+    const { account, 0: catchall } = params;
+
+    const to =
+      `https://${account}.vtexcommercestable.com.br/api/${catchall}${request.url.search}`;
+
+    const { status, body, headers } = await proxy(to, request);
+
+    context.response.headers = headers;
+    context.response.headers.set(
+      "cache-control",
+      "max-age=60, s-maxage=60",
+    );
+    context.response.headers.set(
+      "surrogate-control",
+      "max-age=30, stale-while-revalidate=86400",
+    );
+    context.response.status = status;
+    context.response.body = body;
+  },
+);
+
+router.get(
   "/:account/intelligent-search/(.*)",
   async (context) => {
     const { account, 0: facets } = context.params;
@@ -145,11 +171,11 @@ router.get(
     );
     context.response.headers.set(
       "cache-control",
-      "max-age=60, s-maxage=60",
-    );
-    context.response.headers.set(
-      "surrogate-control",
-      "max-age=30, stale-while-revalidate=86400",
+        "max-age=60, s-maxage=60",
+      );
+      context.response.headers.set(
+        "surrogate-control",
+        "max-age=30, stale-while-revalidate=86400",
     );
 
     context.response.body = results.body;
