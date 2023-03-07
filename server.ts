@@ -132,10 +132,13 @@ router.get(
 
     const { status, body, headers } = await proxy(to, request);
 
+    // Fastly does not cache if a set-cookie is present
+    headers.delete('set-cookie')
+
     context.response.headers = headers;
     context.response.headers.set(
       "cache-control",
-      "max-age=60, s-maxage=60",
+      "public, max-age=60, s-maxage=60",
     );
     context.response.headers.set(
       "surrogate-control",
