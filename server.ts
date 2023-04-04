@@ -133,7 +133,7 @@ router.get(
     const { status, body, headers } = await proxy(to, request);
 
     // Fastly does not cache if a set-cookie is present
-    headers.delete('set-cookie')
+    headers.delete("set-cookie");
 
     context.response.headers = headers;
     context.response.headers.set(
@@ -144,7 +144,9 @@ router.get(
       "surrogate-control",
       "max-age=30, stale-while-revalidate=86400",
     );
-    context.response.status = status;
+    // Someway, somehow, CloudFlare does not cache 206 when range header is not present. Apparently VTEX does not return these headers and nothing is cached.
+    // Let's use a 200 status code for these cases
+    context.response.status = status === 206 ? 200 : status;
     context.response.body = body;
   },
 );
@@ -174,11 +176,11 @@ router.get(
     );
     context.response.headers.set(
       "cache-control",
-        "max-age=60, s-maxage=60",
-      );
-      context.response.headers.set(
-        "surrogate-control",
-        "max-age=30, stale-while-revalidate=86400",
+      "max-age=60, s-maxage=60",
+    );
+    context.response.headers.set(
+      "surrogate-control",
+      "max-age=30, stale-while-revalidate=86400",
     );
 
     context.response.body = results.body;
