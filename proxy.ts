@@ -1,4 +1,4 @@
-import { Cookie, Request, setCookie } from "./deps.ts";
+import { getSetCookies, Request, setCookie } from "./deps.ts";
 
 const hopByHop = [
   "Keep-Alive",
@@ -11,111 +11,14 @@ const hopByHop = [
   "Proxy-Authenticate",
 ];
 
-/**
- * TODO: Remove this function once this PR is merged:
- * https://github.com/denoland/deno_std/pull/3152/files
- */
-function parseSetCookie(value: string): Cookie | null {
-  const attrs = value
-    .split(";")
-    .map((attr) => {
-      const [key, ...values] = attr.trim().split("=").map((keyOrValue) =>
-        keyOrValue.trim()
-      );
-      return [key, values.join("=")];
-    });
-  const cookie: Cookie = {
-    name: attrs[0][0],
-    value: attrs[0][1],
-  };
-
-  for (const [key, value] of attrs.slice(1)) {
-    switch (key.toLocaleLowerCase()) {
-      case "expires":
-        cookie.expires = new Date(value);
-        break;
-      case "max-age":
-        cookie.maxAge = Number(value);
-        if (cookie.maxAge < 0) {
-          console.warn(
-            "Max-Age must be an integer superior or equal to 0. Cookie ignored.",
-          );
-          return null;
-        }
-        break;
-      case "domain":
-        cookie.domain = value;
-        break;
-      case "path":
-        cookie.path = value;
-        break;
-      case "secure":
-        cookie.secure = true;
-        break;
-      case "httponly":
-        cookie.httpOnly = true;
-        break;
-      case "samesite":
-        cookie.sameSite = value as Cookie["sameSite"];
-        break;
-      default:
-        if (!Array.isArray(cookie.unparsed)) {
-          cookie.unparsed = [];
-        }
-        cookie.unparsed.push([key, value].join("="));
-    }
-  }
-  if (cookie.name.startsWith("__Secure-")) {
-    /** This requirement is mentioned in https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie but not the RFC. */
-    if (!cookie.secure) {
-      console.warn(
-        "Cookies with names starting with `__Secure-` must be set with the secure flag. Cookie ignored.",
-      );
-      return null;
-    }
-  }
-  if (cookie.name.startsWith("__Host-")) {
-    if (!cookie.secure) {
-      console.warn(
-        "Cookies with names starting with `__Host-` must be set with the secure flag. Cookie ignored.",
-      );
-      return null;
-    }
-    if (cookie.domain !== undefined) {
-      console.warn(
-        "Cookies with names starting with `__Host-` must not have a domain specified. Cookie ignored.",
-      );
-      return null;
-    }
-    if (cookie.path !== "/") {
-      console.warn(
-        "Cookies with names starting with `__Host-` must have path be `/`. Cookie has been ignored.",
-      );
-      return null;
-    }
-  }
-  return cookie;
-}
-
-function getSetCookies(headers: Headers): Cookie[] {
-  if (!headers.has("set-cookie")) {
-    return [];
-  }
-  // deno-lint-ignore no-explicit-any
-  return [...(headers as any).entries()]
-    .filter(([key]) => key === "set-cookie")
-    .map(([_, value]) => value)
-    /** Parse each `set-cookie` header separately */
-    .map(parseSetCookie)
-    /** Skip empty cookies */
-    .filter(Boolean) as Cookie[];
-}
-
-export const proxy = async (to: string, req: Request) => {
+export const proxy = async (to: URL, req: Request) => {
   const url = new URL(req.url);
   const headers = new Headers(req.headers);
 
   hopByHop.forEach((h) => headers.delete(h));
+  headers.set("origin", to.origin);
+  headers.set("host", to.host);
+  headers.set("x-forwarded-host", url.host);
 
   const response = await fetch(to, {
     headers,

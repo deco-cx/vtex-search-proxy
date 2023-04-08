@@ -127,13 +127,18 @@ router.get(
     const { params, request } = context;
     const { account, 0: catchall } = params;
 
-    const to =
-      `https://${account}.vtexcommercestable.com.br/api/${catchall}${request.url.search}`;
+    const to = new URL(
+      `/api/${catchall}${request.url.search}`,
+      `https://${account}.vtexcommercestable.com.br`,
+    );
 
     const { status, body, headers } = await proxy(to, request);
 
-    // Fastly does not cache if a set-cookie is present
-    headers.delete("set-cookie");
+    // Delete all set-cookies from GET requests since fastly does
+    // not cache it
+    if (request.method === "GET") {
+      headers.delete("set-cookie");
+    }
 
     context.response.headers = headers;
     context.response.headers.set(
